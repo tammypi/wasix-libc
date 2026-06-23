@@ -101,6 +101,42 @@ make CC=/path/to/clang/with/wasm/support \
      NM=/path/to/llvm-nm
 ```
 
+For the local WASIX sandbox shell build, the minimal sysroot build that provides
+`__wasi_proc_exec4` is:
+
+```sh
+git submodule sync --recursive
+git submodule update --init --recursive
+
+TARGET_ARCH=wasm32 \
+TARGET_OS=wasix \
+CC=clang \
+CXX=clang++ \
+AR=llvm-ar \
+NM=llvm-nm \
+CHECK_SYMBOLS=no \
+make clean
+
+TARGET_ARCH=wasm32 \
+TARGET_OS=wasix \
+CC=clang \
+CXX=clang++ \
+AR=llvm-ar \
+NM=llvm-nm \
+CHECK_SYMBOLS=no \
+make
+```
+
+Verify that the generated sysroot exports `proc_exec4`:
+
+```sh
+rg -n "proc_exec4|__wasi_proc_exec4" \
+  sysroot/include/wasi/api_wasix.h
+
+llvm-nm --defined-only sysroot/lib/wasm32-wasi/libc.a | rg "__wasi_proc_exec4"
+llvm-nm --undefined-only sysroot/lib/wasm32-wasi/libc.a | rg "__imported_wasix_32v1_proc_exec4"
+```
+
 This makes a directory called "sysroot", by default. See the top of the Makefile
 for customization options.
 
